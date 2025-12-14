@@ -1,33 +1,52 @@
 import random
 import csv
 
-random_array = {}
+# Generate random digits
+random_array = [random.randint(0, 9) for _ in range(10000)]
 setup_array = [1, 4, 2, 7, 9, 0, 3, 4]
-num_array = {}
-binary_array = {}
+
+num_array = []
+binary_array = []
 
 for i in range(10000):
-    random_array[i] = random.randint(0, 9)
 
-for i in range(10000):
-    setup_array[0] = setup_array[1]
-    setup_array[1] = setup_array[2]
-    setup_array[2] = setup_array[3]
-    setup_array[3] = setup_array[4]
-    setup_array[4] = setup_array[5]
-    setup_array[5] = setup_array[6]
-    setup_array[6] = setup_array[7]
-    setup_array[7] = random_array[i]
-    num_array[i] = setup_array[0]*10000000 + setup_array[1]*1000000 + setup_array[2]*100000 + setup_array[3]*10000 + setup_array[4]*1000 + setup_array[5]*100 + setup_array[6]*10 + setup_array[7]
-    if num_array[i] % 32 == 0:
-        binary_array[i] = 1
-    else:
-        binary_array[i] = 0
-    print(f'Number:{num_array[i]} Binary:{binary_array[i]}')
+    # Shift left and append new random digit
+    setup_array = setup_array[1:] + [random_array[i]]
 
+    # Build 8-digit string
+    num_str = "".join(str(d) for d in setup_array)
 
-with open('output_32.csv', mode='w', newline='') as file:
+    # Convert to int ONLY for divisibility test
+    num_val = int(num_str)
+
+    num_array.append(num_str)  
+    binary_array.append(1 if num_val % 32 == 0 else 0)
+
+    print(f"Number: {num_str} Binary: {binary_array[-1]}")
+
+# -----------------------------
+# TRAIN / TEST SPLIT
+# -----------------------------
+
+split_index = int(0.8 * len(num_array))  # 80% train, 20% test
+
+train_data = list(zip(num_array[:split_index], binary_array[:split_index]))
+test_data  = list(zip(num_array[split_index:], binary_array[split_index:]))
+
+# -----------------------------
+# WRITE TRAIN FILE
+# -----------------------------
+with open("train_32.csv", mode="w", newline="") as file:
     writer = csv.writer(file)
-    writer.writerow(['data', 'label'])  # Header
-    for i in range(10000):
-        writer.writerow([num_array[i], binary_array[i]])
+    writer.writerow(["data", "label"])
+    for num, label in train_data:
+        writer.writerow([num, label])
+
+# -----------------------------
+# WRITE TEST FILE
+# -----------------------------
+with open("test_32.csv", mode="w", newline="") as file:
+    writer = csv.writer(file)
+    writer.writerow(["data", "label"])
+    for num, label in test_data:
+        writer.writerow([num, label])
